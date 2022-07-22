@@ -98,7 +98,7 @@ func CleanTproxy(cfg *config.RawConfig) (errs []error) {
 		}
 	}
 
-	//TODO()
+	//TODO(忘了要DO啥了)
 
 	ctp := func(tp string) {
 		cmdHErr("%s -t mangle -D PREROUTING -p tcp -m socket -j DIVERT", tp)
@@ -144,16 +144,26 @@ func SetTun(cfg *config.RawConfig) (errs []error) {
 		}
 	}
 
-	cmdHErr("ip -4 rule add fwmark %d table %d pref %d", cfg.Iptable.MarkID, cfg.Iptable.TableId, cfg.Iptable.PrefID)
-	cmdHErr("ip -4 route add default dev %s table %d", cfg.Kernel.Template.Tun.Device, cfg.Iptable.TableId)
+	cmdHErr("iptables -w 100 -I FORWARD -o %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
+	cmdHErr("iptables -w 100 -I FORWARD -i %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
+	cmdHErr("ip6tables -w 100 -I FORWARD -o %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
+	cmdHErr("ip6tables -w 100 -I FORWARD -i %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
 
-	if cfg.IPv6 {
-		cmdHErr("ip -6 rule add fwmark %d table %d pref %d", cfg.Iptable.MarkID, cfg.Iptable.TableId, cfg.Iptable.PrefID)
-		cmdHErr("ip -6 route add default dev %s table %d", cfg.Kernel.Template.Tun.Device, cfg.Iptable.TableId)
-	}
 	return
 }
 
 func CleanTun(cfg *config.RawConfig) (errs []error) {
-	return nil
+	cmdHErr := func(mCmd string, a ...any) {
+		_, err := cmd.ExecCmd(fmt.Sprintf(mCmd, a...))
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	cmdHErr("iptables -w 100 -I FORWARD -o %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
+	cmdHErr("iptables -w 100 -I FORWARD -i %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
+	cmdHErr("ip6tables -w 100 -I FORWARD -o %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
+	cmdHErr("ip6tables -w 100 -I FORWARD -i %s -j ACCEPT", cfg.Kernel.Template.Tun.Device)
+
+	return
 }

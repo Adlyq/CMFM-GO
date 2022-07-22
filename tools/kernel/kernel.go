@@ -5,6 +5,7 @@ import (
 	"Clash.Meta_For_Magisk/config/MetaCfg"
 	"Clash.Meta_For_Magisk/log"
 	"Clash.Meta_For_Magisk/tools/cmd"
+	"Clash.Meta_For_Magisk/tools/iptables"
 	"fmt"
 	"path/filepath"
 )
@@ -19,7 +20,13 @@ func StartClash(cfg *config.RawConfig) error {
 		return err
 	}
 
-	_, err = cmd.ExecCmdP(cfg.Busybox, "")
+	if cfg.Kernel.Template.Tun.Enable {
+		//TODO(守护方式启动Clash)
+		iptables.SetTproxy(cfg)
+	} else {
+		//TODO(守护方式通过busybox setuidgid启动Clash)
+		iptables.SetTun(cfg)
+	}
 	if err != nil {
 		return err
 	}
